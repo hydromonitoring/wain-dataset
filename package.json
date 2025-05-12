@@ -12,7 +12,7 @@
     "react-scripts": "^5.0.1",
     "xlsx": "^0.18.5"
   },
-  "homepage": "https://hydromonitory.github.io/wain-dataset",
+  "homepage": "https://hydromonitoring.github.io/wain-dataset",
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
