@@ -1,5 +1,5 @@
-import React, { useState, useRef } from "react";
-import { MapContainer, TileLayer, Marker } from "react-leaflet";
+import React, { useState, useEffect } from "react";
+import { MapContainer, TileLayer, Marker, GeoJSON } from "react-leaflet";
 import L from "leaflet";
 import DamDetailsPanel from "./DamDetailsPanel";
 import ZoomToGeoJson from "./ZoomToGeoJson";
@@ -17,6 +17,8 @@ function DamMap({ dams }) {
   const [geoJsonData, setGeoJsonData] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedBasin, setSelectedBasin] = useState("All");
+  const [indiaBoundary, setIndiaBoundary] = useState(null); // State for India boundary GeoJSON
+  
 
   const basins = [
     "All",
@@ -31,6 +33,27 @@ function DamMap({ dams }) {
       selectedBasin === "All" || dam["River basin name"] === selectedBasin;
     return matchesName && matchesBasin;
   });
+
+  // Fetch India boundary GeoJSON on mount
+    useEffect(() => {
+      const fetchIndiaBoundary = async () => {
+        try {
+          const response = await fetch(
+            "https://saran-sir.s3.ap-south-1.amazonaws.com/india_boundary_line.geojson"
+          );
+          if (response.ok) {
+            const boundaryData = await response.json();
+            setIndiaBoundary(boundaryData);
+          } else {
+            console.error("Failed to fetch India boundary GeoJSON");
+          }
+        } catch (error) {
+          console.error("Error fetching India boundary GeoJSON:", error);
+        }
+      };
+  
+      fetchIndiaBoundary();
+    }, []);
 
   // Fetch GeoJSON & select dam
   const handleDamSelect = async (dam) => {
@@ -53,6 +76,12 @@ function DamMap({ dams }) {
       console.error("Error fetching GeoJSON:", error);
       setGeoJsonData(null);
     }
+  };
+
+  const indiaBoundaryStyle = {
+    color: "black", // Line color
+    weight: 0.8, // Line thickness
+    fill: false, // No fill color
   };
 
   return (
@@ -91,6 +120,10 @@ function DamMap({ dams }) {
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
               attribution="&copy; OpenStreetMap contributors"
             />
+            {/* Render India Boundary GeoJSON */}
+            {indiaBoundary && (
+              <GeoJSON data={indiaBoundary} style={indiaBoundaryStyle} />
+            )}
             {filteredDams.map((dam) => {
               const lat = parseFloat(dam["latitude"]);
               const lng = parseFloat(dam["longitude"]);
