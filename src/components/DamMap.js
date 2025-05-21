@@ -1,69 +1,88 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { MapContainer, TileLayer, Marker, GeoJSON } from "react-leaflet";
 import L from "leaflet";
 import DamDetailsPanel from "./DamDetailsPanel";
 import ZoomToGeoJson from "./ZoomToGeoJson";
 import "leaflet/dist/leaflet.css";
-
-// Small circular marker icon
-const circleMarkerIcon = L.divIcon({
-  className: "custom-circle-marker",
-  iconSize: [12, 12],
-  html: '<div></div>',
-});
+import MarkerClusterGroup from "react-leaflet-cluster";
 
 function DamMap({ dams }) {
   const [selectedDam, setSelectedDam] = useState(null);
   const [geoJsonData, setGeoJsonData] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedBasin, setSelectedBasin] = useState("All");
-  const [indiaBoundary, setIndiaBoundary] = useState(null); // State for India boundary GeoJSON
-  
+  const [indiaBoundary, setIndiaBoundary] = useState(null);
+  const [zoom, setZoom] = useState(5);
+
+  const mapRef = useRef();
 
   const basins = [
     "All",
-    ...Array.from(new Set(dams.map((d) => d["River basin name"])).values()),
+    ...Array.from(new Set(dams.map((d) => d["River Basin Name"])).values()),
   ];
+
   // Filtered dams
   const filteredDams = dams.filter((dam) => {
-    const matchesName = dam["Station name"]
+    const matchesName = dam["Station Name"]
       .toLowerCase()
       .includes(searchTerm.toLowerCase());
     const matchesBasin =
-      selectedBasin === "All" || dam["River basin name"] === selectedBasin;
+      selectedBasin === "All" || dam["River Basin Name"] === selectedBasin;
     return matchesName && matchesBasin;
   });
 
-  // Fetch India boundary GeoJSON on mount
-    useEffect(() => {
-      const fetchIndiaBoundary = async () => {
-        try {
-          const response = await fetch(
-            "https://saran-sir.s3.ap-south-1.amazonaws.com/india_boundary_line.geojson"
-          );
-          if (response.ok) {
-            const boundaryData = await response.json();
-            setIndiaBoundary(boundaryData);
-          } else {
-            console.error("Failed to fetch India boundary GeoJSON");
-          }
-        } catch (error) {
-          console.error("Error fetching India boundary GeoJSON:", error);
+  // Fetch India boundary GeoJSON on mount and set up zoom listener
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    const handleZoom = () => setZoom(map.getZoom());
+    map.on("zoomend", handleZoom);
+
+    const fetchIndiaBoundary = async () => {
+      try {
+        const response = await fetch(
+          "https://saran-sir.s3.ap-south-1.amazonaws.com/india_boundary_line.geojson"
+        );
+        if (response.ok) {
+          const boundaryData = await response.json();
+          setIndiaBoundary(boundaryData);
+        } else {
+          console.error("Failed to fetch India boundary GeoJSON");
         }
-      };
-  
-      fetchIndiaBoundary();
-    }, []);
+      } catch (error) {
+        console.error("Error fetching India boundary GeoJSON:", error);
+      }
+    };
+    fetchIndiaBoundary();
+
+    return () => {
+      map.off("zoomend", handleZoom);
+    };
+  }, []);
+
+  // Dynamically size marker based on zoom (smaller when zoomed out)
+  function getMarkerIcon(zoom) {
+    // At zoom 5: size = 6, at zoom 10: size = 16, at zoom 15: size = 18 (max)
+    const size = Math.max(6, Math.min(18, (zoom - 2) * 2));
+    return L.divIcon({
+      className: "custom-circle-marker",
+      iconSize: [size, size],
+      html: `<div style="width:${size}px;height:${size}px;border-radius:50%;background:#1976d2;border:2px solid white;"></div>`,
+    });
+  }
 
   // Fetch GeoJSON & select dam
   const handleDamSelect = async (dam) => {
     setSelectedDam(dam);
-    setGeoJsonData(null); // Clear previous polygon immediately for better UX
-    
-    if (!dam["Station id"]) return;
-    
+    setGeoJsonData(null);
+
+    if (!dam["Station ID"]) return;
+
     try {
-      const resp = await fetch(`https://saran-sir.s3.ap-south-1.amazonaws.com/shapefiles/${dam["Station id"]}.geojson`);
+      const resp = await fetch(
+        `https://saran-sir.s3.ap-south-1.amazonaws.com/shapefiles/${dam["Station ID"]}.geojson`
+      );
       if (resp.ok) {
         const json = await resp.json();
         const geoData = json.geojson ? json.geojson : json;
@@ -78,17 +97,18 @@ function DamMap({ dams }) {
     }
   };
 
+  // Style for India boundary
   const indiaBoundaryStyle = {
-    color: "black", // Line color
-    weight: 0.8, // Line thickness
-    fill: false, // No fill color
+    color: "black",
+    weight: 0.8,
+    fill: false,
   };
 
   const handleClosePanel = () => {
     setSelectedDam(null);
     setGeoJsonData(null);
-    setSearchTerm(""); // Clear search term
-    }
+    setSearchTerm("");
+  };
 
   return (
     <div className="app-layout">
@@ -121,6 +141,10 @@ function DamMap({ dams }) {
             center={[22.5, 78.9]}
             zoom={5}
             style={{ height: "100%", width: "100%" }}
+            whenCreated={(mapInstance) => {
+              mapRef.current = mapInstance;
+              setZoom(mapInstance.getZoom());
+            }}
           >
             <TileLayer
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -130,21 +154,24 @@ function DamMap({ dams }) {
             {indiaBoundary && (
               <GeoJSON data={indiaBoundary} style={indiaBoundaryStyle} />
             )}
-            {filteredDams.map((dam) => {
-              const lat = parseFloat(dam["latitude"]);
-              const lng = parseFloat(dam["longitude"]);
-              if (!lat || !lng) return null;
-              return (
-                <Marker
-                  key={dam["Station id"]}
-                  position={[lat, lng]}
-                  icon={circleMarkerIcon}
-                  eventHandlers={{
-                    click: () => handleDamSelect(dam),
-                  }}
-                />
-              );
-            })}
+
+            <MarkerClusterGroup chunkedLoading>
+              {filteredDams.map((dam) => {
+                const lat = parseFloat(dam["Latitude (°)"]);
+                const lng = parseFloat(dam["Longitude (°)"]);
+                if (!lat || !lng) return null;
+                return (
+                  <Marker
+                    key={dam["Station ID"]}
+                    position={[lat, lng]}
+                    icon={getMarkerIcon(zoom)}
+                    eventHandlers={{
+                      click: () => handleDamSelect(dam),
+                    }}
+                  />
+                );
+              })}
+            </MarkerClusterGroup>
             {geoJsonData && <ZoomToGeoJson geoJsonData={geoJsonData} />}
           </MapContainer>
         </div>
