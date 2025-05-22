@@ -47,7 +47,7 @@ function DamMap({ dams }) {
     const fetchIndiaBoundary = async () => {
       try {
         const response = await fetch(
-          "https://saran-sir.s3.ap-south-1.amazonaws.com/india_boundary_line.geojson"
+          "https://hydromonitoring-lab-datasets.s3.ap-south-1.amazonaws.com/india_boundary_line.geojson"
         );
         if (response.ok) {
           const boundaryData = await response.json();
@@ -82,7 +82,7 @@ function DamMap({ dams }) {
 
     try {
       const resp = await fetch(
-        `https://saran-sir.s3.ap-south-1.amazonaws.com/shapefiles/${dam["Station ID"]}.geojson`
+        `https://hydromonitoring-lab-datasets.s3.ap-south-1.amazonaws.com/shapefiles/${dam["Station ID"]}.geojson`
       );
       if (resp.ok) {
         const json = await resp.json();
