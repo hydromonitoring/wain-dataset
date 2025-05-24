@@ -14,102 +14,114 @@ function DamMap({ dams }) {
   const [indiaBoundary, setIndiaBoundary] = useState(null);
   const [zoom, setZoom] = useState(5);
   const [showOnlyHydro, setShowOnlyHydro] = useState(false);
+  const [basinGeoJson, setBasinGeoJson] = useState(null);
 
   const mapRef = useRef();
 
-  const basins = [
-    "All",
-    ...Array.from(new Set(dams.map((d) => d["River Basin Name"])).values()),
-  ];
+  const basins = React.useMemo(
+    () => ["All", ...Array.from(new Set(dams.map((d) => d["River Basin Name"])).values())],
+    [dams]
+  );
 
   // Filtered dams
-  const filteredDams = dams.filter((dam) => {
-    const matchesName = dam["Station Name"]
-      .toLowerCase()
-      .includes(searchTerm.toLowerCase());
-    const matchesBasin =
-      selectedBasin === "All" || dam["River Basin Name"] === selectedBasin;
-    const matchesHydro = !showOnlyHydro || hasHydrologyData(dam);
-    return matchesName && matchesBasin && matchesHydro;
-  });
+  const filteredDams = React.useMemo(() => 
+    dams.filter((dam) => {
+      const matchesName = dam["Station Name"]
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase());
+      const matchesBasin =
+        selectedBasin === "All" || dam["River Basin Name"] === selectedBasin;
+      const matchesHydro = !showOnlyHydro || hasHydrologyData(dam);
+      return matchesName && matchesBasin && matchesHydro;
+    }),
+    [dams, searchTerm, selectedBasin, showOnlyHydro]
+  );
 
-  // Fetch India boundary GeoJSON on mount and set up zoom listener
+  // Fetch India boundary GeoJSON on mount
+  useEffect(() => {
+    fetch("https://hydromonitoring-lab-datasets.s3.ap-south-1.amazonaws.com/india_boundary_line.geojson")
+      .then((response) => response.ok ? response.json() : null)
+      .then((boundaryData) => boundaryData && setIndiaBoundary(boundaryData))
+      .catch(() => {});
+  }, []);
+
+  // Update zoom state on map zoom
   useEffect(() => {
     const map = mapRef.current;
     if (!map) return;
-
     const handleZoom = () => setZoom(map.getZoom());
     map.on("zoomend", handleZoom);
-
-    return () => {
-      map.off("zoomend", handleZoom);
-    };
+    return () => map.off("zoomend", handleZoom);
   }, []);
+
+  // Fit map to basin when basinGeoJson changes
   useEffect(() => {
-    const fetchIndiaBoundary = async () => {
-      try {
-        const response = await fetch(
-          "https://hydromonitoring-lab-datasets.s3.ap-south-1.amazonaws.com/india_boundary_line.geojson"
-        );
-        if (response.ok) {
-          const boundaryData = await response.json();
-          setIndiaBoundary(boundaryData);
-        } else {
-          console.error("Failed to fetch India boundary GeoJSON");
-        }
-      } catch (error) {
-        console.error("Error fetching India boundary GeoJSON:", error);
-      }
-    };
-    fetchIndiaBoundary();
-  }, []);
+    if (
+      basinGeoJson &&
+      mapRef.current &&
+      selectedBasin &&
+      selectedBasin !== "All"
+    ) {
+      // Use requestAnimationFrame for more reliable timing
+      requestAnimationFrame(() => {
+        const geoJsonLayer = L.geoJSON(basinGeoJson);
+        const bounds = geoJsonLayer.getBounds();
+        const sidebar = document.querySelector('.sidebar-details.open');
+        const sidebarWidth = sidebar ? sidebar.offsetWidth : 350;
+        mapRef.current.fitBounds(bounds, {
+          paddingTopLeft: [0, 0],
+          paddingBottomRight: [sidebarWidth + 40, 0],
+          maxZoom: 8,
+        });
+      });
+    }
+  }, [basinGeoJson, selectedBasin]);
 
-  // Dynamically size marker based on zoom (smaller when zoomed out)
-  function getMarkerIcon(zoom) {
-    // At zoom 5: size = 6, at zoom 10: size = 16, at zoom 15: size = 18 (max)
-    const size = Math.max(6, Math.min(18, (zoom - 2) * 2));
-    return L.divIcon({
-      className: "custom-circle-marker",
-      iconSize: [size, size],
-      html: `<div style="width:${size}px;height:${size}px;border-radius:50%;background:#1976d2;border:2px solid white;"></div>`,
-    });
+  // Fetch basin GeoJSON
+  async function fetchBasinGeoJson(basinName) {
+    setBasinGeoJson(null);
+    if (!basinName || basinName === "All") return;
+    try {
+      const url = `https://hydromonitoring-lab-datasets.s3.ap-south-1.amazonaws.com/river_basin_geojson/${encodeURIComponent(
+        basinName
+      )}.geojson`;
+      const resp = await fetch(url);
+      if (resp.ok) {
+        const geo = await resp.json();
+        setBasinGeoJson(geo);
+      }
+    } catch {
+      // Already cleared
+    }
   }
 
-  // Fetch GeoJSON & select dam
+  // Fetch dam shapefile & select dam
   const handleDamSelect = async (dam) => {
     setSelectedDam(dam);
     setGeoJsonData(null);
-
-    if (!dam["Station ID"]) return;
-
-    try {
-      const resp = await fetch(
-        `https://hydromonitoring-lab-datasets.s3.ap-south-1.amazonaws.com/shapefiles/${dam["Station ID"]}.geojson`
-      );
-      if (resp.ok) {
-        const json = await resp.json();
-        const geoData = json.geojson ? json.geojson : json;
-        setGeoJsonData(geoData);
-      } else {
-        console.error("Failed to fetch GeoJSON data");
+    if (dam["Station ID"]) {
+      try {
+        const resp = await fetch(
+          `https://hydromonitoring-lab-datasets.s3.ap-south-1.amazonaws.com/shapefiles/${dam["Station ID"]}.geojson`
+        );
+        if (resp.ok) {
+          const json = await resp.json();
+          const geoData = json.geojson ? json.geojson : json;
+          setGeoJsonData(geoData);
+        } else {
+          setGeoJsonData(null);
+        }
+      } catch {
         setGeoJsonData(null);
       }
-    } catch (error) {
-      console.error("Error fetching GeoJSON:", error);
-      setGeoJsonData(null);
     }
-  };
-
-  // Style for India boundary
-  const indiaBoundaryStyle = {
-    color: "black",
-    weight: 0.6,
-    fill: false,
+    // Do NOT fetch basin shapefile here
   };
 
   const handleClosePanel = () => {
     setSelectedDam(null);
     setGeoJsonData(null);
+    setBasinGeoJson(null);
     setSearchTerm("");
   };
 
@@ -139,6 +151,15 @@ function DamMap({ dams }) {
     );
   }
 
+  function getMarkerIcon(zoom) {
+    const size = Math.max(6, Math.min(18, (zoom - 2) * 2));
+    return L.divIcon({
+      className: "custom-circle-marker",
+      iconSize: [size, size],
+      html: `<div style="width:${size}px;height:${size}px;border-radius:50%;background:#1976d2;border:2px solid white;"></div>`,
+    });
+  }
+
   return (
     <div className="app-layout">
       <header className="header">
@@ -154,7 +175,10 @@ function DamMap({ dams }) {
         />
         <select
           value={selectedBasin}
-          onChange={(e) => setSelectedBasin(e.target.value)}
+          onChange={(e) => {
+            setSelectedBasin(e.target.value);
+            fetchBasinGeoJson(e.target.value);
+          }}
           className="toolbar-select"
         >
           {basins.map((basin) => (
@@ -193,11 +217,15 @@ function DamMap({ dams }) {
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
               attribution="&copy; OpenStreetMap contributors"
             />
-            {/* Render India Boundary GeoJSON */}
             {indiaBoundary && (
-              <GeoJSON data={indiaBoundary} style={indiaBoundaryStyle} />
+              <GeoJSON data={indiaBoundary} style={{ color: "black", weight: 0.6, fill: false }} />
             )}
-
+            {basinGeoJson && (
+              <GeoJSON
+                data={basinGeoJson}
+                style={{ color: "#ff9800", weight: 2, fillOpacity: 0.1 }}
+              />
+            )}
             <MarkerClusterGroup chunkedLoading>
               {filteredDams.map((dam) => {
                 const lat = parseFloat(dam["Latitude (°)"]);
