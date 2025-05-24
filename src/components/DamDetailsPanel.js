@@ -79,7 +79,7 @@ const CATEGORIES = [
       "Silt Content (%)",
       "Clay Content (%)",
       "Organic Carbon Content (g/kg)",
-      "AWC (mm)",
+      "AWC (mm/m)",
       "Conductivity (mm/day)",
       "Porosity",
       "Maximum Water Content (m)",
@@ -173,7 +173,7 @@ function DamDetailsPanel({ dam, geoJsonData, open, onClose }) {
                   cursor: "pointer"
                 }}
               >
-                DAM Report
+                Watershed Report
                 </a>
             </div>
             <table>

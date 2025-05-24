@@ -114,12 +114,12 @@ function DamMap({ dams }) {
   return (
     <div className="app-layout">
       <header className="header">
-        <span className="header-title">Wain Data Set</span>
+        <span className="header-title">WAIN Data Set</span>
       </header>
       <div className="toolbar">
         <input
           type="text"
-          placeholder="Search dam name..."
+          placeholder="Search Watershed name..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="toolbar-input"
