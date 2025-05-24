@@ -11,8 +11,8 @@ const CATEGORIES = [
       "Longitude (°)",
       "Area (km²)",
       "Perimeter (km)",
-      "Circularity Ratio"
-    ]
+      "Circularity Ratio",
+    ],
   },
   {
     label: "Topographical",
@@ -20,8 +20,8 @@ const CATEGORIES = [
       "Minimum Elevation (m)",
       "Maximum Elevation (m)",
       "Mean Elevation (m)",
-      "Mean Slope (m/km)"
-    ]
+      "Mean Slope (m/km)",
+    ],
   },
   {
     label: "Climatic",
@@ -36,8 +36,8 @@ const CATEGORIES = [
       "High Precipitation Spell (days)",
       "Low Precipitation Spell (days)",
       "Aridity Index",
-      "Seasonality"
-    ]
+      "Seasonality",
+    ],
   },
   {
     label: "Geological",
@@ -48,8 +48,8 @@ const CATEGORIES = [
       "Area Covered by Second Dominant Lithological Class",
       "Subsurface Permeability (m², log scale)",
       "Subsurface Porosity",
-      "Groundwater Mean Level (m)"
-    ]
+      "Groundwater Mean Level (m)",
+    ],
   },
   {
     label: "LULC",
@@ -68,8 +68,8 @@ const CATEGORIES = [
       "NDVI (DJF)",
       "NDVI (MAM)",
       "NDVI (JJA)",
-      "NDVI (SON)"
-    ]
+      "NDVI (SON)",
+    ],
   },
   {
     label: "Soil",
@@ -83,8 +83,8 @@ const CATEGORIES = [
       "Conductivity (mm/day)",
       "Porosity",
       "Maximum Water Content (m)",
-      "Bulk Density (kg/m³)"
-    ]
+      "Bulk Density (kg/m³)",
+    ],
   },
   {
     label: "Human Activity",
@@ -92,9 +92,27 @@ const CATEGORIES = [
       "Road Density (m/km²)",
       "Population",
       "Human Footprint",
-      "Stable Light"
-    ]
-  }
+      "Stable Light",
+    ],
+  },
+  {
+    label: "Hydrological Signature",
+    keys: [
+      "Q5 (m³/sec)",
+      "Q95 (m³/sec)",
+      "High Discharge Frequency (days/year)",
+      "Low Discharge Frequency (days/year)",
+      "Zero Discharge Frequency (days/year)",
+      "Slope of Flow Duration Curve",
+      "High Spell Days",
+      "Low Spell Days",
+      "Baseflow Index",
+      "Mean Half-Flow Days",
+      "Mean Discharge (mm/day)",
+      "Runoff Coefficient",
+      "Elasticity",
+    ],
+  },
 ];
 
 // Export the current tab/category as JSON, Overview includes GeoJSON
@@ -102,14 +120,18 @@ function exportCategoryAsJSON(dam, geoJsonData, tab) {
   const damName = (dam["Station Name"] || "dam").replace(/[^a-z0-9]/gi, "_");
   const category = CATEGORIES[tab];
   const json = {};
-  category.keys.forEach(k => { json[k] = dam[k]; });
+  category.keys.forEach((k) => {
+    json[k] = dam[k];
+  });
 
   // If Overview, include GeoJSON if available
   if (tab === 0 && geoJsonData) {
     json.GeoJSON = geoJsonData;
   }
 
-  const blob = new Blob([JSON.stringify(json, null, 2)], { type: "application/json" });
+  const blob = new Blob([JSON.stringify(json, null, 2)], {
+    type: "application/json",
+  });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
@@ -119,16 +141,39 @@ function exportCategoryAsJSON(dam, geoJsonData, tab) {
 }
 
 function DamDetailsPanel({ dam, geoJsonData, open, onClose }) {
+  // Filter categories: only show Hydrology if at least one value is not NaN
+  const filteredCategories = React.useMemo(() => {
+    return CATEGORIES.filter((cat) => {
+      if (cat.label !== "Hydrology") return true;
+      // Only show Hydrology if at least one value is a valid number
+      return cat.keys.some(
+        (k) =>
+          dam &&
+          dam[k] !== undefined &&
+          dam[k] !== null &&
+          dam[k] !== "" &&
+          typeof dam[k] === "number" &&
+          !Number.isNaN(dam[k])
+      );
+    });
+  }, [dam]);
+
+  // Adjust tab index if needed
   const [tab, setTab] = useState(0);
+  React.useEffect(() => {
+    if (tab >= filteredCategories.length) setTab(0);
+  }, [filteredCategories, tab]);
 
   return (
     <div className={`sidebar-details${open ? " open" : ""}`}>
-      <button className="sidebar-close-btn" onClick={onClose}>×</button>
+      <button className="sidebar-close-btn" onClick={onClose}>
+        ×
+      </button>
       {dam ? (
         <>
           <h2 className="sidebar-title">{dam["Station Name"]}</h2>
           <div className="sidebar-tabs">
-            {CATEGORIES.map((cat, idx) => (
+            {filteredCategories.map((cat, idx) => (
               <button
                 key={cat.label}
                 className={tab === idx ? "sidebar-tab active" : "sidebar-tab"}
@@ -141,16 +186,24 @@ function DamDetailsPanel({ dam, geoJsonData, open, onClose }) {
           <div className="sidebar-tab-content">
             <div style={{ margin: "12px 0" }}>
               <button
-                onClick={() => exportCategoryAsJSON(dam, geoJsonData, tab)}
+                onClick={() =>
+                  exportCategoryAsJSON(
+                    dam,
+                    geoJsonData,
+                    CATEGORIES.findIndex((c) => c.label === filteredCategories[tab].label)
+                  )
+                }
                 style={{
                   background: "#1976d2",
                   color: "#fff",
                   padding: "7px 18px",
                   border: "none",
                   borderRadius: 6,
-                  cursor: "pointer"
-                }}>
-                Export {CATEGORIES[tab].label} {tab === 0 ? "(+Shapefile)" : ""}
+                  cursor: "pointer",
+                }}
+              >
+                Export {filteredCategories[tab].label}{" "}
+                {filteredCategories[tab].label === "Overview" ? "(+Shapefile)" : ""}
               </button>
               {/* DAM Report Button */}
               <a
@@ -170,18 +223,18 @@ function DamDetailsPanel({ dam, geoJsonData, open, onClose }) {
                   border: "none",
                   borderRadius: 6,
                   textDecoration: "none",
-                  cursor: "pointer"
+                  cursor: "pointer",
                 }}
               >
                 Watershed Report
-                </a>
+              </a>
             </div>
             <table>
               <tbody>
-                {CATEGORIES[tab].keys.map((k) =>
+                {filteredCategories[tab].keys.map((k) =>
                   dam[k] !== undefined ? (
                     <tr key={k}>
-                      <td style={{fontWeight:"bold"}}>{k}</td>
+                      <td style={{ fontWeight: "bold" }}>{k}</td>
                       <td>{dam[k]}</td>
                     </tr>
                   ) : null

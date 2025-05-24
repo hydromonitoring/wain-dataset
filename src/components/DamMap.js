@@ -13,6 +13,7 @@ function DamMap({ dams }) {
   const [selectedBasin, setSelectedBasin] = useState("All");
   const [indiaBoundary, setIndiaBoundary] = useState(null);
   const [zoom, setZoom] = useState(5);
+  const [showOnlyHydro, setShowOnlyHydro] = useState(false);
 
   const mapRef = useRef();
 
@@ -28,7 +29,8 @@ function DamMap({ dams }) {
       .includes(searchTerm.toLowerCase());
     const matchesBasin =
       selectedBasin === "All" || dam["River Basin Name"] === selectedBasin;
-    return matchesName && matchesBasin;
+    const matchesHydro = !showOnlyHydro || hasHydrologyData(dam);
+    return matchesName && matchesBasin && matchesHydro;
   });
 
   // Fetch India boundary GeoJSON on mount and set up zoom listener
@@ -42,7 +44,7 @@ function DamMap({ dams }) {
     return () => {
       map.off("zoomend", handleZoom);
     };
-  }, [])
+  }, []);
   useEffect(() => {
     const fetchIndiaBoundary = async () => {
       try {
@@ -111,6 +113,32 @@ function DamMap({ dams }) {
     setSearchTerm("");
   };
 
+  function hasHydrologyData(dam) {
+    const hydroKeys = [
+      "Q5 (m³/sec)",
+      "Q95 (m³/sec)",
+      "High Discharge Frequency (days/year)",
+      "Low Discharge Frequency (days/year)",
+      "Zero Discharge Frequency (days/year)",
+      "Slope of Flow Duration Curve",
+      "High Spell Days",
+      "Low Spell Days",
+      "Baseflow Index",
+      "Mean Half-Flow Days",
+      "Mean Discharge (mm/day)",
+      "Runoff Coefficient",
+      "Elasticity",
+    ];
+    return hydroKeys.some(
+      (k) =>
+        dam[k] !== undefined &&
+        dam[k] !== null &&
+        dam[k] !== "" &&
+        typeof dam[k] === "number" &&
+        !Number.isNaN(dam[k])
+    );
+  }
+
   return (
     <div className="app-layout">
       <header className="header">
@@ -135,6 +163,20 @@ function DamMap({ dams }) {
             </option>
           ))}
         </select>
+        <button
+          style={{
+            marginLeft: 10,
+            padding: "7px 18px",
+            border: "none",
+            borderRadius: 6,
+            background: showOnlyHydro ? "#1976d2" : "#888",
+            color: "#fff",
+            cursor: "pointer",
+          }}
+          onClick={() => setShowOnlyHydro((v) => !v)}
+        >
+          {showOnlyHydro ? "Reset" : "Show Only Hydrological Signature Dams"}
+        </button>
       </div>
       <div className="main-content">
         <div className="map-container">
