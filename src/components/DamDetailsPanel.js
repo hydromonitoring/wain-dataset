@@ -30,6 +30,11 @@ const CATEGORIES = [
       "Maximum Temperature (°C)",
       "Minimum Temperature (°C)",
       "High Precipitation Frequency (days/year)",
+      "Maximum Wind Speed (m/s)",
+      "Mean Wind Speed (m/s)",
+      "Evaporation (mm)",
+      "PET (mm)",
+      "Maximum Precipitation (mm)",
       "Low Precipitation Frequency (days/year)",
       "High Precipitation Season",
       "Low Precipitation Season",
@@ -144,16 +149,14 @@ function DamDetailsPanel({ dam, geoJsonData, open, onClose }) {
   // Filter categories: only show Hydrology if at least one value is not NaN
   const filteredCategories = React.useMemo(() => {
     return CATEGORIES.filter((cat) => {
-      if (cat.label !== "Hydrology") return true;
+      if (cat.label !== "Hydrological Signature") return true;
       // Only show Hydrology if at least one value is a valid number
       return cat.keys.some(
         (k) =>
           dam &&
           dam[k] !== undefined &&
           dam[k] !== null &&
-          dam[k] !== "" &&
-          typeof dam[k] === "number" &&
-          !Number.isNaN(dam[k])
+          dam[k] !== ""
       );
     });
   }, [dam]);
@@ -190,7 +193,9 @@ function DamDetailsPanel({ dam, geoJsonData, open, onClose }) {
                   exportCategoryAsJSON(
                     dam,
                     geoJsonData,
-                    CATEGORIES.findIndex((c) => c.label === filteredCategories[tab].label)
+                    CATEGORIES.findIndex(
+                      (c) => c.label === filteredCategories[tab].label
+                    )
                   )
                 }
                 style={{
@@ -203,7 +208,9 @@ function DamDetailsPanel({ dam, geoJsonData, open, onClose }) {
                 }}
               >
                 Export {filteredCategories[tab].label}{" "}
-                {filteredCategories[tab].label === "Overview" ? "(+Shapefile)" : ""}
+                {filteredCategories[tab].label === "Overview"
+                  ? "(+Shapefile)"
+                  : ""}
               </button>
               {/* DAM Report Button */}
               <a
@@ -235,7 +242,8 @@ function DamDetailsPanel({ dam, geoJsonData, open, onClose }) {
                   dam[k] !== undefined ? (
                     <tr key={k}>
                       <td style={{ fontWeight: "bold" }}>{k}</td>
-                      <td>{dam[k]}</td>
+                      <td>{typeof dam[k] === "number"
+                        ? dam[k].toFixed(3) : dam[k]}</td>
                     </tr>
                   ) : null
                 )}
