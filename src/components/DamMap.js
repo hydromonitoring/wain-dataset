@@ -266,7 +266,7 @@ function DamMap({ dams }) {
           }}
           onClick={() => setShowOnlyHydro((v) => !v)}
         >
-          {showOnlyHydro ? "Reset" : "Show Only Hydrological Signature Dams"}
+          {showOnlyHydro ? "Reset" : "Show Only Hydrological Signature Watersheds"}
         </button>
       </div>
       <div className="main-content">
