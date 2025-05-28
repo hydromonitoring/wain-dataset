@@ -133,10 +133,11 @@ function DamMap({ dams }) {
 
   // Handle basin selection
   const handleBasinChange = useCallback(async (basinName) => {
+    // Clear the current basin GeoJSON data immediately
+    setBasinGeoJson(null);
     setSelectedBasin(basinName);
 
     if (!basinName || basinName === "All") {
-      setBasinGeoJson(null);
       setResetMapFlag(true);
       return;
     }
@@ -155,12 +156,10 @@ function DamMap({ dams }) {
         setBasinGeoJson(data);
       } else {
         console.error(`Failed to fetch basin GeoJSON for ${basinName}`);
-        setBasinGeoJson(null);
         setResetMapFlag(true);
       }
     } catch (error) {
       console.error("Error fetching basin GeoJSON:", error);
-      setBasinGeoJson(null);
       setResetMapFlag(true);
     }
   }, []);
