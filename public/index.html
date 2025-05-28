@@ -4,11 +4,55 @@
     <meta charset="utf-8" />
     <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#000000" />
-    <title>WAIN Data</title>
+    <meta name="theme-color" content="#1976d2" />
+    
+    <!-- Primary Meta Tags -->
+    <title>WAIN Dataset - Watershed Atlas of India Network</title>
+    <meta name="title" content="WAIN Dataset - Watershed Atlas of India Network">
+    <meta name="description" content="Interactive map visualization of hydrological data across Indian watersheds. Explore dam locations, river basins, and detailed hydrological signatures.">
+    <meta name="keywords" content="WAIN, Watershed Atlas, India, hydrology, river basins, dams, water resources, hydrological signatures">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://hydromonitoring.github.io/wain-dataset/">
+    <meta property="og:title" content="WAIN Dataset - Watershed Atlas of India Network">
+    <meta property="og:description" content="Interactive map visualization of hydrological data across Indian watersheds. Explore dam locations, river basins, and detailed hydrological signatures.">
+    <meta property="og:image" content="%PUBLIC_URL%/og-image.jpg">
+    
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://hydromonitoring.github.io/wain-dataset/">
+    <meta property="twitter:title" content="WAIN Dataset - Watershed Atlas of India Network">
+    <meta property="twitter:description" content="Interactive map visualization of hydrological data across Indian watersheds. Explore dam locations, river basins, and detailed hydrological signatures.">
+    <meta property="twitter:image" content="%PUBLIC_URL%/og-image.jpg">
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://hydromonitoring.github.io/wain-dataset/">
+    
+    <!-- Robots -->
+    <meta name="robots" content="index, follow">
+    
+    <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
+    <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>
     <div id="root"></div>
+    <!-- Structured data for Google -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "WAIN Dataset",
+        "description": "Interactive map visualization of hydrological data across Indian watersheds. Explore dam locations, river basins, and detailed hydrological signatures.",
+        "applicationCategory": "Scientific Tool",
+        "operatingSystem": "Web Browser",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD"
+        }
+      }
+    </script>
   </body>
 </html>
