@@ -234,6 +234,13 @@ function DamMap({ dams }) {
     <div className="app-layout">
       <header className="header">
         <span className="header-title">WAIN Data Set</span>
+        <button 
+          className="back-button"
+          onClick={() => window.location.href = "https://hydromonitoring.github.io/lab-datasets/"}
+          aria-label="Go back to datasets page"
+        >
+          Back to Datasets
+        </button>
       </header>
       <div className="toolbar">
         <input

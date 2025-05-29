@@ -141,6 +141,27 @@ body, html, #root {
   box-shadow: 0 1px 4px rgba(30,40,80,0.14);
 }
 
+.back-button {
+  padding: 6px 12px;
+  background-color: #1976d2;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  margin-left: auto; /* This pushes the button to the right */
+}
+
+.back-button:hover {
+  background-color: #1565c0;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between; /* This helps with spacing */
+}
+
 @media (max-width: 900px) {
   .sidebar-details.open {
     width: 100vw;
