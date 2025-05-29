@@ -1,13 +1,13 @@
 {
   "files": {
-    "main.css": "/wain-dataset/static/css/main.63ad87a8.css",
-    "main.js": "/wain-dataset/static/js/main.1b098650.js",
+    "main.css": "/wain-dataset/static/css/main.9842c908.css",
+    "main.js": "/wain-dataset/static/js/main.a725f6cc.js",
     "index.html": "/wain-dataset/index.html",
-    "main.63ad87a8.css.map": "/wain-dataset/static/css/main.63ad87a8.css.map",
-    "main.1b098650.js.map": "/wain-dataset/static/js/main.1b098650.js.map"
+    "main.9842c908.css.map": "/wain-dataset/static/css/main.9842c908.css.map",
+    "main.a725f6cc.js.map": "/wain-dataset/static/js/main.a725f6cc.js.map"
   },
   "entrypoints": [
-    "static/css/main.63ad87a8.css",
-    "static/js/main.1b098650.js"
+    "static/css/main.9842c908.css",
+    "static/js/main.a725f6cc.js"
   ]
 }
