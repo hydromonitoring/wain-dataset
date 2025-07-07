@@ -4,118 +4,121 @@ const CATEGORIES = [
   {
     label: "Overview",
     keys: [
-      "Station ID",
-      "Station Name",
-      "River Basin Name",
-      "Latitude (°)",
-      "Longitude (°)",
-      "Area (km²)",
-      "Perimeter (km)",
-      "Circularity Ratio",
+      { name: "Station ID", source: "" },
+      { name: "Station Name", source: "" },
+      { name: "River Basin Name", source: "" },
+      { name: "Latitude (°)", source: "" },
+      { name: "Longitude (°)", source: "" },
     ],
   },
   {
     label: "Topographical",
     keys: [
-      "Minimum Elevation (m)",
-      "Maximum Elevation (m)",
-      "Mean Elevation (m)",
-      "Mean Slope (m/km)",
+      { name: "Area (km²)", source: "SRTM" },
+      { name: "Perimeter (km)", source: "SRTM" },
+      { name: "Circularity Ratio", source: "SRTM" },
+      { name: "Minimum Elevation (m)", source: "SRTM" },
+      { name: "Maximum Elevation (m)", source: "SRTM" },
+      { name: "Mean Elevation (m)", source: "SRTM" },
+      { name: "Mean Slope (m/km)", source: "SRTM" },
     ],
   },
   {
     label: "Climatic",
     keys: [
-      "Mean Precipitation Rate (mm/day)",
-      "Maximum Temperature (°C)",
-      "Minimum Temperature (°C)",
-      "High Precipitation Frequency (days/year)",
-      "Maximum Wind Speed (m/s)",
-      "Mean Wind Speed (m/s)",
-      "Evaporation (mm)",
-      "PET (mm)",
-      "Maximum Precipitation (mm)",
-      "Low Precipitation Frequency (days/year)",
-      "High Precipitation Season",
-      "Low Precipitation Season",
-      "High Precipitation Spell (days)",
-      "Low Precipitation Spell (days)",
-      "Aridity Index",
-      "Seasonality",
+      { name: "Mean Precipitation Rate (mm/day)", source: "IMD, ERA5" },
+      { name: "Maximum Temperature (°C)", source: "IMD, ERA5" },
+      { name: "Minimum Temperature (°C)", source: "IMD, ERA5" },
+      { name: "High Precipitation Frequency (days/year)", source: "IMD, ERA5" },
+      { name: "Low Precipitation Frequency (days/year)", source: "IMD, ERA5" },
+      { name: "High Precipitation Season", source: "IMD, ERA5" },
+      { name: "Low Precipitation Season", source: "IMD, ERA5" },
+      { name: "High Precipitation Spell (days)", source: "IMD, ERA5" },
+      { name: "Low Precipitation Spell (days)", source: "IMD, ERA5" },
+      { name: "Aridity Index", source: "IMD, ERA5" },
+      { name: "Seasonality", source: "IMD, ERA5" },
+      { name: "1 day Maximum Precipitation (mm)", source: "IMD, ERA5" },
+      { name: "Maximum Wind Speed (m/s)", source: "IMD, ERA5" },
+      { name: "Minimum Wind Speed (m/s)", source: "IMD, ERA5" },
+      { name: "Evaporation (mm/day)", source: "IMD, ERA5" },
+      { name: "Potential Evapotranspiration (mm/day)", source: "IMD, ERA5" },
+      { name: "Evaporation_GLEAM (mm/day)", source: "GLEAM" },
+      { name: "Potential Evapotranspiration_GLEAM (mm/day)", source: "GLEAM" },
     ],
   },
   {
     label: "Geological",
     keys: [
-      "Dominant Lithological Class",
-      "Area Covered by Dominant Lithological Class",
-      "Second Dominant Lithological Class",
-      "Area Covered by Second Dominant Lithological Class",
-      "Subsurface Permeability (m², log scale)",
-      "Subsurface Porosity",
-      "Groundwater Mean Level (m)",
+      { name: "Dominant Lithological Class", source: "GLiM" },
+      { name: "Area Covered by Dominant Lithological Class", source: "GLiM" },
+      { name: "Second Dominant Lithological Class", source: "GLiM" },
+      { name: "Area Covered by Second Dominant Lithological Class", source: "GLiM" },
+      { name: "Subsurface Permeability (m², log scale)", source: "GLHYMPS" },
+      { name: "Subsurface Porosity", source: "GLHYMPS" },
+      { name: "Groundwater Mean Level (m)", source: "CWC (India-WRIS)" },
     ],
   },
   {
     label: "LULC",
     keys: [
-      "Dominant LULC Class",
-      "Fraction of Builtup",
-      "Fraction of Agriculture",
-      "Fraction of Forest Land",
-      "Fraction of Grassland",
-      "Fraction of Scrub",
-      "Fraction of Water",
-      "Fraction of Snow",
-      "Fraction of Bareland",
-      "Fraction of Wetland",
-      "Fraction of Tundra",
-      "NDVI (DJF)",
-      "NDVI (MAM)",
-      "NDVI (JJA)",
-      "NDVI (SON)",
+      { name: "Dominant LULC Class", source: "GLC_FCS30" },
+      { name: "Fraction of Builtup", source: "GLC_FCS30" },
+      { name: "Fraction of Agriculture", source: "GLC_FCS30" },
+      { name: "Fraction of Forest Land", source: "GLC_FCS30" },
+      { name: "Fraction of Grassland", source: "GLC_FCS30" },
+      { name: "Fraction of Scrub", source: "GLC_FCS30" },
+      { name: "Fraction of Water", source: "GLC_FCS30" },
+      { name: "Fraction of Snow", source: "GLC_FCS30" },
+      { name: "Fraction of Bareland", source: "GLC_FCS30" },
+      { name: "Fraction of Wetland", source: "GLC_FCS30" },
+      { name: "Fraction of Tundra", source: "GLC_FCS30" },
+      { name: "NDVI (DJF)", source: "AVHRR" },
+      { name: "NDVI (MAM)", source: "AVHRR" },
+      { name: "NDVI (JJA)", source: "AVHRR" },
+      { name: "NDVI (SON)", source: "AVHRR" },
     ],
   },
   {
     label: "Soil",
     keys: [
-      "Coarse Content (vol. %)",
-      "Sand Content (%)",
-      "Silt Content (%)",
-      "Clay Content (%)",
-      "Organic Carbon Content (g/kg)",
-      "AWC (mm/m)",
-      "Conductivity (mm/day)",
-      "Porosity",
-      "Maximum Water Content (m)",
-      "Bulk Density (kg/m³)",
+      { name: "Coarse Content (vol. %)", source: "FAO" },
+      { name: "Sand Content (%)", source: "FAO" },
+      { name: "Silt Content (%)", source: "FAO" },
+      { name: "Clay Content (%)", source: "FAO" },
+      { name: "Organic Carbon Content (g/kg)", source: "FAO" },
+      { name: "AWC (mm/m)", source: "FAO" },
+      { name: "Conductivity (mm/day)", source: "FAO" },
+      { name: "Porosity", source: "FAO" },
+      { name: "Maximum Water Content (m)", source: "FAO" },
+      { name: "Bulk Density (kg/m³)", source: "FAO" },
     ],
   },
   {
     label: "Human Activity",
     keys: [
-      "Road Density (m/km²)",
-      "Population",
-      "Human Footprint",
-      "Stable Light",
+      { name: "Road Density (m/km²)", source: "Meijer et al., 2018" },
+      { name: "Population", source: "CIESIN" },
+      { name: "Population Density (people/km²)", source: "CIESIN" },
+      { name: "Human Footprint", source: "CIESIN" },
+      { name: "Stable Light", source: "DMSP" },
     ],
   },
   {
     label: "Hydrological Signature",
     keys: [
-      "Q5 (m³/sec)",
-      "Q95 (m³/sec)",
-      "High Discharge Frequency (days/year)",
-      "Low Discharge Frequency (days/year)",
-      "Zero Discharge Frequency (days/year)",
-      "Slope of Flow Duration Curve",
-      "High Spell Days",
-      "Low Spell Days",
-      "Baseflow Index",
-      "Mean Half-Flow Days",
-      "Mean Discharge (mm/day)",
-      "Runoff Coefficient",
-      "Elasticity",
+      { name: "Q5 (m³/sec)", source: "WAIN Streamflow Records" },
+      { name: "Q95 (m³/sec)", source: "WAIN Streamflow Records" },
+      { name: "High Discharge Frequency (days/year)", source: "WAIN Streamflow Records" },
+      { name: "Low Discharge Frequency (days/year)", source: "WAIN Streamflow Records" },
+      { name: "Zero Discharge Frequency (days/year)", source: "WAIN Streamflow Records" },
+      { name: "Slope of Flow Duration Curve", source: "WAIN Streamflow Records" },
+      { name: "High Spell Days", source: "WAIN Streamflow Records" },
+      { name: "Low Spell Days", source: "WAIN Streamflow Records" },
+      { name: "Baseflow Index", source: "WAIN Streamflow Records" },
+      { name: "Mean Half-Flow Days", source: "WAIN Streamflow Records" },
+      { name: "Mean Discharge (mm/day)", source: "WAIN Streamflow Records" },
+      { name: "Runoff Coefficient", source: "WAIN Streamflow Records" },
+      { name: "Elasticity", source: "WAIN Streamflow Records" },
     ],
   },
 ];
@@ -126,7 +129,7 @@ function exportCategoryAsJSON(dam, geoJsonData, tab) {
   const category = CATEGORIES[tab];
   const json = {};
   category.keys.forEach((k) => {
-    json[k] = dam[k];
+    json[k.name] = dam[k.name];
   });
 
   // If Overview, include GeoJSON if available
@@ -154,9 +157,9 @@ function DamDetailsPanel({ dam, geoJsonData, open, onClose }) {
       return cat.keys.some(
         (k) =>
           dam &&
-          dam[k] !== undefined &&
-          dam[k] !== null &&
-          dam[k] !== ""
+          dam[k.name] !== undefined &&
+          dam[k.name] !== null &&
+          dam[k.name] !== ""
       );
     });
   }, [dam]);
@@ -239,11 +242,23 @@ function DamDetailsPanel({ dam, geoJsonData, open, onClose }) {
             <table>
               <tbody>
                 {filteredCategories[tab].keys.map((k) =>
-                  dam[k] !== undefined ? (
-                    <tr key={k}>
-                      <td style={{ fontWeight: "bold" }}>{k}</td>
-                      <td>{typeof dam[k] === "number"
-                        ? dam[k].toFixed(3) : dam[k]}</td>
+                  dam[k.name] !== undefined ? (
+                    <tr key={k.name}>
+                      <td style={{ fontWeight: "bold", verticalAlign: "top" }}>
+                        {k.name}
+                        <div style={{ 
+                          fontSize: "0.75em", 
+                          color: "#666", 
+                          fontWeight: "normal", 
+                          marginTop: "2px" 
+                        }}>
+                          {k.source}
+                        </div>
+                      </td>
+                      <td style={{ verticalAlign: "top" }}>
+                        {typeof dam[k.name] === "number"
+                          ? dam[k.name].toFixed(3) : dam[k.name]}
+                      </td>
                     </tr>
                   ) : null
                 )}

@@ -1,3 +1,4 @@
 node_modules/
 build/
 01.ipynb
+.DS_Store
