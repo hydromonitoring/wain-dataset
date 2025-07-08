@@ -81,12 +81,12 @@ const CATEGORIES = [
   {
     label: "Soil",
     keys: [
-      { name: "Coarse Content (vol. %)", source: "FAO" },
-      { name: "Sand Content (%)", source: "FAO" },
-      { name: "Silt Content (%)", source: "FAO" },
-      { name: "Clay Content (%)", source: "FAO" },
-      { name: "Organic Carbon Content (g/kg)", source: "FAO" },
-      { name: "AWC (mm/m)", source: "FAO" },
+      { name: "Coarse Content (vol. %)", source: "HWSD" },
+      { name: "Sand Content (%)", source: "HWSD" },
+      { name: "Silt Content (%)", source: "HWSD" },
+      { name: "Clay Content (%)", source: "HWSD" },
+      { name: "Organic Carbon Content (g/kg)", source: "HWSD" },
+      { name: "AWC (mm/m)", source: "HWSD" },
       { name: "Conductivity (mm/day)", source: "FAO" },
       { name: "Porosity", source: "FAO" },
       { name: "Maximum Water Content (m)", source: "FAO" },
