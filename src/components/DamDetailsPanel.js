@@ -1,27 +1,30 @@
-import React, { useState } from "react";
+import React, { useState, useMemo, useEffect } from "react";
+
+// Helper function to create category keys
+const createCategoryKeys = (keys) => keys.map(([name, source]) => ({ name, source }));
 
 const CATEGORIES = [
   {
     label: "Overview",
-    keys: [
-      { name: "Station ID", source: "" },
-      { name: "Station Name", source: "" },
-      { name: "River Basin Name", source: "" },
-      { name: "Latitude (°)", source: "" },
-      { name: "Longitude (°)", source: "" },
-    ],
+    keys: createCategoryKeys([
+      ["Station ID", ""],
+      ["Station Name", ""],
+      ["River Basin Name", ""],
+      ["Latitude (°)", ""],
+      ["Longitude (°)", ""],
+    ]),
   },
   {
     label: "Topographical",
-    keys: [
-      { name: "Area (km²)", source: "SRTM" },
-      { name: "Perimeter (km)", source: "SRTM" },
-      { name: "Circularity Ratio", source: "SRTM" },
-      { name: "Minimum Elevation (m)", source: "SRTM" },
-      { name: "Maximum Elevation (m)", source: "SRTM" },
-      { name: "Mean Elevation (m)", source: "SRTM" },
-      { name: "Mean Slope (m/km)", source: "SRTM" },
-    ],
+    keys: createCategoryKeys([
+      ["Area (km²)", "SRTM"],
+      ["Perimeter (km)", "SRTM"],
+      ["Circularity Ratio", "SRTM"],
+      ["Minimum Elevation (m)", "SRTM"],
+      ["Maximum Elevation (m)", "SRTM"],
+      ["Mean Elevation (m)", "SRTM"],
+      ["Mean Slope (m/km)", "SRTM"],
+    ]),
   },
   {
     label: "Climatic",
@@ -183,153 +186,188 @@ const CATEGORIES = [
   },
 ];
 
-// Export the current tab/category as JSON, Overview includes GeoJSON
-function exportCategoryAsJSON(dam, geoJsonData, tab) {
+// Utility function for export
+const exportCategoryAsJSON = (dam, geoJsonData, tab) => {
   const damName = (dam["Station Name"] || "dam").replace(/[^a-z0-9]/gi, "_");
   const category = CATEGORIES[tab];
   const json = {};
+  
   category.keys.forEach((k) => {
     json[k.name] = dam[k.name];
   });
 
-  // If Overview, include GeoJSON if available
   if (tab === 0 && geoJsonData) {
     json.GeoJSON = geoJsonData;
   }
 
-  const blob = new Blob([JSON.stringify(json, null, 2)], {
-    type: "application/json",
-  });
+  const blob = new Blob([JSON.stringify(json, null, 2)], { type: "application/json" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
   a.download = `${damName}-${category.label.replace(/ /g, "_")}.json`;
   a.click();
   URL.revokeObjectURL(url);
-}
+};
 
-function DamDetailsPanel({ dam, geoJsonData, open, onClose }) {
-  // Filter categories: only show Hydrology if at least one value is not NaN
-  const filteredCategories = React.useMemo(() => {
+// Subcomponents
+const ExportButtons = ({ dam, geoJsonData, filteredCategories, tab }) => (
+  <div style={{ margin: "12px 0" }}>
+    <button
+      onClick={() => exportCategoryAsJSON(
+        dam,
+        geoJsonData,
+        CATEGORIES.findIndex(c => c.label === filteredCategories[tab].label)
+      )}
+      style={{
+        background: "#1976d2",
+        color: "#fff",
+        padding: "7px 18px",
+        border: "none",
+        borderRadius: 6,
+        cursor: "pointer",
+      }}
+    >
+      Export {filteredCategories[tab].label}{" "}
+      {filteredCategories[tab].label === "Overview" ? "(+Shapefile)" : ""}
+    </button>
+    
+    <a
+      href={`https://hydromonitoring.github.io/wain-reports/${encodeURIComponent(
+        (dam["River Basin Name"] || "").replace(/ /g, "_")
+      )}/${encodeURIComponent(
+        (dam["Station Name"] || "").replace(/ /g, "_")
+      )}`}
+      target="_blank"
+      rel="noopener"
+      style={{
+        display: "inline-block",
+        marginLeft: 10,
+        background: "#388e3c",
+        color: "#fff",
+        padding: "7px 18px",
+        border: "none",
+        borderRadius: 6,
+        textDecoration: "none",
+        cursor: "pointer",
+      }}
+    >
+      Watershed Report
+    </a>
+  </div>
+);
+
+const DataRow = ({ keyItem, value }) => {
+  if (value === undefined) return null;
+  
+  return (
+    <tr key={keyItem.name}>
+      <td style={{ fontWeight: "bold", verticalAlign: "top" }}>
+        {keyItem.name}
+        <div style={{ 
+          fontSize: "0.75em", 
+          color: "#666", 
+          fontWeight: "normal", 
+          marginTop: "2px" 
+        }}>
+          {keyItem.source}
+        </div>
+      </td>
+      <td style={{ verticalAlign: "top" }}>
+        {typeof value === "number" ? value.toFixed(3) : value}
+      </td>
+    </tr>
+  );
+};
+
+const TabNavigation = ({ filteredCategories, activeTab, onTabChange }) => (
+  <div className="sidebar-tabs">
+    {filteredCategories.map((cat, idx) => (
+      <button
+        key={cat.label}
+        className={activeTab === idx ? "sidebar-tab active" : "sidebar-tab"}
+        onClick={() => onTabChange(idx)}
+      >
+        {cat.label}
+      </button>
+    ))}
+  </div>
+);
+
+const DataTable = ({ categoryKeys, dam }) => (
+  <table>
+    <tbody>
+      {categoryKeys.map((k) => (
+        <DataRow key={k.name} keyItem={k} value={dam[k.name]} />
+      ))}
+    </tbody>
+  </table>
+);
+
+const EmptyState = () => (
+  <div className="sidebar-empty">
+    <span>Select a dam marker to see details here.</span>
+  </div>
+);
+
+// Hook for category filtering
+const useFilteredCategories = (dam) => {
+  return useMemo(() => {
     return CATEGORIES.filter((cat) => {
       if (cat.label !== "Hydrological Signature") return true;
-      // Only show Hydrology if at least one value is a valid number
       return cat.keys.some(
-        (k) =>
-          dam &&
-          dam[k.name] !== undefined &&
-          dam[k.name] !== null &&
-          dam[k.name] !== ""
+        (k) => dam && dam[k.name] !== undefined && dam[k.name] !== null && dam[k.name] !== ""
       );
     });
   }, [dam]);
+};
 
-  // Adjust tab index if needed
+// Main component
+
+function DamDetailsPanel({ dam, geoJsonData, open, onClose }) {
   const [tab, setTab] = useState(0);
-  React.useEffect(() => {
+  const filteredCategories = useFilteredCategories(dam);
+
+  // Reset tab if it exceeds available categories
+  useEffect(() => {
     if (tab >= filteredCategories.length) setTab(0);
   }, [filteredCategories, tab]);
 
+  if (!open) {
+    return <div className="sidebar-details" />;
+  }
+
   return (
-    <div className={`sidebar-details${open ? " open" : ""}`}>
+    <div className="sidebar-details open">
       <button className="sidebar-close-btn" onClick={onClose}>
         ×
       </button>
+      
       {dam ? (
         <>
           <h2 className="sidebar-title">{dam["Station Name"]}</h2>
-          <div className="sidebar-tabs">
-            {filteredCategories.map((cat, idx) => (
-              <button
-                key={cat.label}
-                className={tab === idx ? "sidebar-tab active" : "sidebar-tab"}
-                onClick={() => setTab(idx)}
-              >
-                {cat.label}
-              </button>
-            ))}
-          </div>
+          
+          <TabNavigation 
+            filteredCategories={filteredCategories}
+            activeTab={tab}
+            onTabChange={setTab}
+          />
+          
           <div className="sidebar-tab-content">
-            <div style={{ margin: "12px 0" }}>
-              <button
-                onClick={() =>
-                  exportCategoryAsJSON(
-                    dam,
-                    geoJsonData,
-                    CATEGORIES.findIndex(
-                      (c) => c.label === filteredCategories[tab].label
-                    )
-                  )
-                }
-                style={{
-                  background: "#1976d2",
-                  color: "#fff",
-                  padding: "7px 18px",
-                  border: "none",
-                  borderRadius: 6,
-                  cursor: "pointer",
-                }}
-              >
-                Export {filteredCategories[tab].label}{" "}
-                {filteredCategories[tab].label === "Overview"
-                  ? "(+Shapefile)"
-                  : ""}
-              </button>
-              {/* DAM Report Button */}
-              <a
-                href={`https://hydromonitoring.github.io/wain-reports/${encodeURIComponent(
-                  (dam["River Basin Name"] || "").replace(/ /g, "_")
-                )}/${encodeURIComponent(
-                  (dam["Station Name"] || "").replace(/ /g, "_")
-                )}`}
-                target="_blank"
-                rel="noopener"
-                style={{
-                  display: "inline-block",
-                  marginLeft: 10,
-                  background: "#388e3c",
-                  color: "#fff",
-                  padding: "7px 18px",
-                  border: "none",
-                  borderRadius: 6,
-                  textDecoration: "none",
-                  cursor: "pointer",
-                }}
-              >
-                Watershed Report
-              </a>
-            </div>
-            <table>
-              <tbody>
-                {filteredCategories[tab].keys.map((k) =>
-                  dam[k.name] !== undefined ? (
-                    <tr key={k.name}>
-                      <td style={{ fontWeight: "bold", verticalAlign: "top" }}>
-                        {k.name}
-                        <div style={{ 
-                          fontSize: "0.75em", 
-                          color: "#666", 
-                          fontWeight: "normal", 
-                          marginTop: "2px" 
-                        }}>
-                          {k.source}
-                        </div>
-                      </td>
-                      <td style={{ verticalAlign: "top" }}>
-                        {typeof dam[k.name] === "number"
-                          ? dam[k.name].toFixed(3) : dam[k.name]}
-                      </td>
-                    </tr>
-                  ) : null
-                )}
-              </tbody>
-            </table>
+            <ExportButtons 
+              dam={dam}
+              geoJsonData={geoJsonData}
+              filteredCategories={filteredCategories}
+              tab={tab}
+            />
+            
+            <DataTable 
+              categoryKeys={filteredCategories[tab]?.keys || []}
+              dam={dam}
+            />
           </div>
         </>
       ) : (
-        <div className="sidebar-empty">
-          <span>Select a dam marker to see details here.</span>
-        </div>
+        <EmptyState />
       )}
     </div>
   );
