@@ -105,21 +105,24 @@ function DamMap({ dams }) {
     [dams]
   );
 
-  // Filtered dams
-  const filteredDams = React.useMemo(
-    () =>
-      dams.filter((dam) => {
-        const matchesName =
-          dam["Station Name"]
-            ?.toLowerCase()
-            .includes(searchTerm.toLowerCase()) || false;
-        const matchesBasin =
-          selectedBasin === "All" || dam["River Basin Name"] === selectedBasin;
-        const matchesHydro = !showOnlyHydro || hasHydrologyData(dam);
-        return matchesName && matchesBasin && matchesHydro;
-      }),
-    [dams, searchTerm, selectedBasin, showOnlyHydro]
-  );
+  // Filtered dams (unique by Station ID)
+  const filteredDams = React.useMemo(() => {
+    // Remove duplicates by Station ID
+    const seen = new Set();
+    return dams.filter((dam) => {
+      const id = dam["Station ID"];
+      if (!id || seen.has(id)) return false;
+      seen.add(id);
+      const matchesName =
+        dam["Station Name"]
+          ?.toLowerCase()
+          .includes(searchTerm.toLowerCase()) || false;
+      const matchesBasin =
+        selectedBasin === "All" || dam["River Basin Name"] === selectedBasin;
+      const matchesHydro = !showOnlyHydro || hasHydrologyData(dam);
+      return matchesName && matchesBasin && matchesHydro;
+    });
+  }, [dams, searchTerm, selectedBasin, showOnlyHydro]);
 
   // Fetch India boundary GeoJSON on mount
   useEffect(() => {
